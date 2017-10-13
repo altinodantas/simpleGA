@@ -7,7 +7,6 @@ import java.util.Random;
 public class GeneticAlgorithm {
 
 	public Random r = new Random();
-	public Solution s;
 
 	public int CHROMOSOME_SIZE = 32;
 	public int MAX_GENERATIONS = 1000;
@@ -21,8 +20,6 @@ public class GeneticAlgorithm {
 	public static void main(String[] args) {
 
 		GeneticAlgorithm ag = new GeneticAlgorithm();
-		
-		ag.s = new Solution(ag.CHROMOSOME_SIZE);
 		
 		ag.initializePop();
 
@@ -64,7 +61,7 @@ public class GeneticAlgorithm {
 
 		for (int i = 0; i < POPULATION_SIZE; i++) {
 
-			int[] individual = new int[s.chromosome_size];
+			int[] individual = new int[CHROMOSOME_SIZE];
 			for (int j = 0; j < individual.length; j++)
 				individual[j] = 0;
 				//individual[j] = r.nextInt(2);

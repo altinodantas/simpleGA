@@ -6,10 +6,6 @@ public class Solution implements Comparable<Solution>{
 	public int[] chromosome;
 	public float fitness;
 
-	public Solution(int chromossome_size) {
-		this.chromosome_size = chromossome_size;
-	}
-
 	public Solution(int[] bits) {
 		this.chromosome_size = bits.length;
 		this.chromosome = bits;
