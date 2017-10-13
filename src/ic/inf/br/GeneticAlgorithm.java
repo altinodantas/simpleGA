@@ -63,8 +63,7 @@ public class GeneticAlgorithm {
 
 			int[] individual = new int[CHROMOSOME_SIZE];
 			for (int j = 0; j < individual.length; j++)
-				individual[j] = 0;
-				//individual[j] = r.nextInt(2);
+				individual[j] = r.nextInt(2);
 			population.add(new Solution(individual));
 		}
 
