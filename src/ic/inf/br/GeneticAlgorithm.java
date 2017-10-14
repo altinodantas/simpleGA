@@ -8,10 +8,10 @@ public class GeneticAlgorithm {
 
 	public Random r = new Random();
 
-	public int CHROMOSOME_SIZE = 32;
+	public int CHROMOSOME_SIZE = 44;
 	public int MAX_GENERATIONS = 1000;
-	public int POPULATION_SIZE = 32;
-	public float CROSSOVER_RATE = 0.95f;
+	public int POPULATION_SIZE = 100;
+	public float CROSSOVER_RATE = 0.65f;
 	public float MUTATION_RATE = 0.15f;
 
 	public ArrayList<Solution> population = new ArrayList<>();
@@ -34,7 +34,7 @@ public class GeneticAlgorithm {
 
 			Collections.sort(ag.population);
 
-			System.out.println(ag.avgGenerationFitness());
+			System.out.println(ag.avgGenerationFitness() + "\t" + ag.population.get(0).fitness);
 
 			generation++;
 		}
@@ -138,7 +138,27 @@ public class GeneticAlgorithm {
 
 		System.out.println("\n--------------------");
 		System.out.println(s.fitness);
+		
+		double x = 0, y = 0;
+		
+		int bin_x[] = new int[s.chromosome.length/2]; int bin_y[] = new int[s.chromosome.length/2];
+		
+		for (int i = 0; i < bin_y.length; i++) {
+			bin_x[i] = s.chromosome[i];
+			bin_y[i] = s.chromosome[i + bin_y.length];
+		}
+		
+		for (int i = 0; i < bin_x.length; i++) 
+			x += bin_x[i] * Math.pow(2, bin_x.length - i - 1);
+		
+		x = -100 + x * (200) / (Math.pow(2, bin_x.length) - 1);
+		
+		for (int i = 0; i < bin_y.length; i++) 
+			y += bin_y[i] * Math.pow(2, bin_y.length - i - 1);
 
+		y = -100 + y * (200) / (Math.pow(2, bin_y.length) - 1);
+		
+		System.out.println("x: " + x + "y: " + x);
 	}
 	
 	public float avgGenerationFitness() {
