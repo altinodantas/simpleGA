@@ -1,10 +1,13 @@
 package ic.inf.br;
 
+import java.util.Random;
+
 public class Solution implements Comparable<Solution>{
 
 	public int chromosome_size;
 	public int[] chromosome;
 	public float fitness;
+	private static Random random;
 
 	public Solution(int[] bits) {
 		this.chromosome_size = bits.length;
@@ -60,6 +63,7 @@ public class Solution implements Comparable<Solution>{
 		
 		xsqrdysqrd = x * x + y * y;
 		
-		return 1 - ((0.5 + (Math.pow(Math.sin(  Math.sqrt(xsqrdysqrd)),2) - 0.5) / Math.pow((1 + 0.001 * xsqrdysqrd), 2)));
+		return ((0.5 - (Math.pow(Math.sin(  Math.sqrt(xsqrdysqrd)),2) - 0.5) / Math.pow((1 + 0.001 * xsqrdysqrd), 2)));
 	}
+	
 }

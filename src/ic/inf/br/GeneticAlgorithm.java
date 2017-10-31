@@ -9,25 +9,26 @@ public class GeneticAlgorithm {
 	public Random r = new Random();
 
 	public int CHROMOSOME_SIZE = 44;
-	public int MAX_GENERATIONS = 1000;
+	public int MAX_GENERATIONS = 100;
 	public int POPULATION_SIZE = 100;
-	public float CROSSOVER_RATE = 0.65f;
+	public float CROSSOVER_RATE = 0.80f;
 	public float MUTATION_RATE = 0.15f;
 
 	public ArrayList<Solution> population = new ArrayList<>();
 	public ArrayList<Solution> offspring = new ArrayList<>();
+	public Invitro IVF = new Invitro(CHROMOSOME_SIZE);
 
 	public static void main(String[] args) {
 
-		GeneticAlgorithm ag = new GeneticAlgorithm();
-		
+		GeneticAlgorithm ag = new GeneticAlgorithm();	
+
 		ag.initializePop();
 
 		Collections.sort(ag.population);
 
 		int generation = 0;
 		while (generation < ag.MAX_GENERATIONS) {
-
+			
 			ag.performeCrossover();
 			ag.mutation();
 			ag.copyOffspring();
@@ -37,15 +38,27 @@ public class GeneticAlgorithm {
 			System.out.println(ag.avgGenerationFitness() + "\t" + ag.population.get(0).fitness);
 
 			generation++;
+
 		}
-		
+
 		ag.printSolution(ag.population.get(0));
 	}
 
 	private void copyOffspring() {
 
 		for (Solution solution : offspring)
-			this.population.add(solution);
+			this.population.add(new Solution(solution.chromosome));
+		
+		/* Execution of In Vitro Fertilization Module */
+		
+		Solution inv_solution = IVF.performInVitro(IVF.collect(this.population, 11),IVF.EAR_P);
+		
+		if(inv_solution.fitness > this.population.get(0).fitness) {
+			this.population.add(inv_solution);
+//			System.out.println(this.population.get(0).fitness + "\t|" + inv_solution.fitness);
+		}
+		
+		/* Execution of In Vitro Fertilization Module */
 
 		Collections.sort(this.population);
 
@@ -67,13 +80,42 @@ public class GeneticAlgorithm {
 			population.add(new Solution(individual));
 		}
 
-	}	
+	}
+	
+	public int randSelection() {
+		return r.nextInt(POPULATION_SIZE);
+	}
 
 	public int binaryTournament() {
-		// Attention: this works just whether population is already sorted by fitness values
+
+		// Attention: this works just whether population is already sorted by fitness
+		// values
+
 		int x1 = r.nextInt(POPULATION_SIZE);
 		int x2 = r.nextInt(POPULATION_SIZE);
+
 		return (x1 < x2) ? x1 : x2;
+	}
+
+	public int roulette() {
+		int index = 0;
+		
+		//sum of all fitness
+		float sum = 0;
+		for (Solution solution : population)
+			sum += solution.fitness;
+
+		float threshold = (float) (Math.random() * sum);
+		
+		float a_sum = 0;
+		for (int i = 0; i < population.size(); i++) {
+			a_sum += population.get(i).fitness;
+			if (a_sum >= threshold) {
+				index = i;
+				break;
+			}
+		}
+		return index;
 	}
 
 	public void performeCrossover() {
@@ -82,7 +124,10 @@ public class GeneticAlgorithm {
 		int size = (int) (POPULATION_SIZE / 2 * CROSSOVER_RATE) * 2;
 
 		for (int i = 0; i < size; i += 2) {
-			ArrayList<Solution> sons = this.onePoint(population.get(this.binaryTournament()), population.get(this.binaryTournament()));
+//			ArrayList<Solution> sons = this.onePoint(population.get(this.roulette()),
+//					population.get(this.roulette()));
+			ArrayList<Solution> sons = this.onePoint(population.get(this.binaryTournament()),
+					population.get(this.binaryTournament()));
 			this.offspring.add(sons.get(0));
 			this.offspring.add(sons.get(1));
 		}
@@ -119,8 +164,7 @@ public class GeneticAlgorithm {
 	public void mutation() {
 		for (Solution solution : offspring) {
 			for (int i = 0; i < solution.chromosome.length; i++) {
-				float prob = r.nextFloat();
-				if (prob <= MUTATION_RATE)
+				if (r.nextFloat() <= MUTATION_RATE)
 					if (solution.chromosome[i] == 0)
 						solution.chromosome[i] = 1;
 					else
@@ -138,32 +182,33 @@ public class GeneticAlgorithm {
 
 		System.out.println("\n--------------------");
 		System.out.println(s.fitness);
-		
+
 		double x = 0, y = 0;
-		
-		int bin_x[] = new int[s.chromosome.length/2]; int bin_y[] = new int[s.chromosome.length/2];
-		
+
+		int bin_x[] = new int[s.chromosome.length / 2];
+		int bin_y[] = new int[s.chromosome.length / 2];
+
 		for (int i = 0; i < bin_y.length; i++) {
 			bin_x[i] = s.chromosome[i];
 			bin_y[i] = s.chromosome[i + bin_y.length];
 		}
-		
-		for (int i = 0; i < bin_x.length; i++) 
+
+		for (int i = 0; i < bin_x.length; i++)
 			x += bin_x[i] * Math.pow(2, bin_x.length - i - 1);
-		
+
 		x = -100 + x * (200) / (Math.pow(2, bin_x.length) - 1);
-		
-		for (int i = 0; i < bin_y.length; i++) 
+
+		for (int i = 0; i < bin_y.length; i++)
 			y += bin_y[i] * Math.pow(2, bin_y.length - i - 1);
 
 		y = -100 + y * (200) / (Math.pow(2, bin_y.length) - 1);
-		
-		System.out.println("x: " + x + "y: " + x);
+
+		System.out.println("x: " + x + ", y: " + x);
 	}
-	
+
 	public float avgGenerationFitness() {
 		float avg = 0;
-		for (Solution solution : population) 
+		for (Solution solution : population)
 			avg += solution.fitness;
 		return avg / population.size();
 	}
