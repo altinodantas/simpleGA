@@ -12,7 +12,7 @@ public class GeneticAlgorithm {
 	public int MAX_GENERATIONS = 100;
 	public int POPULATION_SIZE = 100;
 	public float CROSSOVER_RATE = 0.80f;
-	public float MUTATION_RATE = 0.15f;
+	public float MUTATION_RATE = 0.05f;
 
 	public ArrayList<Solution> population = new ArrayList<>();
 	public ArrayList<Solution> offspring = new ArrayList<>();
@@ -35,7 +35,7 @@ public class GeneticAlgorithm {
 
 			Collections.sort(ag.population);
 
-			System.out.println(ag.avgGenerationFitness() + "\t" + ag.population.get(0).fitness);
+//			System.out.println(ag.avgGenerationFitness() + "\t" + ag.population.get(0).fitness);
 
 			generation++;
 
@@ -55,7 +55,7 @@ public class GeneticAlgorithm {
 		
 		if(inv_solution.fitness > this.population.get(0).fitness) {
 			this.population.add(inv_solution);
-//			System.out.println(this.population.get(0).fitness + "\t|" + inv_solution.fitness);
+			System.out.println(this.population.get(0).fitness + "\t|" + inv_solution.fitness);
 		}
 		
 		/* Execution of In Vitro Fertilization Module */
@@ -124,10 +124,10 @@ public class GeneticAlgorithm {
 		int size = (int) (POPULATION_SIZE / 2 * CROSSOVER_RATE) * 2;
 
 		for (int i = 0; i < size; i += 2) {
-//			ArrayList<Solution> sons = this.onePoint(population.get(this.roulette()),
-//					population.get(this.roulette()));
-			ArrayList<Solution> sons = this.onePoint(population.get(this.binaryTournament()),
-					population.get(this.binaryTournament()));
+			ArrayList<Solution> sons = this.onePoint(population.get(this.roulette()),
+					population.get(this.roulette()));
+//			ArrayList<Solution> sons = this.onePoint(population.get(this.binaryTournament()),
+//					population.get(this.binaryTournament()));
 			this.offspring.add(sons.get(0));
 			this.offspring.add(sons.get(1));
 		}

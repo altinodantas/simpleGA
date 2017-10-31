@@ -3,16 +3,18 @@ package ic.inf.br;
 import java.util.ArrayList;
 import java.util.Random;
 
+import com.sun.xml.internal.messaging.saaj.packaging.mime.util.BEncoderStream;
+
 public class Invitro {
 
 	public static final int AR = 1;
 	public static final int EAR_P = 2;
 	public static final int EAR_T = 3;
 	public static final int EAR_N = 4;
-		
+
 	private int CHROMOSOME_SIZE = 44;
 	private Random r = new Random();
-	private ArrayList<Solution> offspring = new ArrayList<>();
+	private ArrayList<Solution> ivf_offspring = new ArrayList<>();
 
 	public Invitro(int chromosome_size) {
 		this.CHROMOSOME_SIZE = chromosome_size;
@@ -36,6 +38,7 @@ public class Invitro {
 	}
 
 	private Solution AR(ArrayList<Solution> solutions) {
+
 		Solution father = solutions.get(0);
 		solutions.remove(0);
 
@@ -43,118 +46,140 @@ public class Invitro {
 
 			ArrayList<Solution> sons = this.onePoint(solution, father);
 
-			this.offspring.add(sons.get(0));
-			this.offspring.add(sons.get(1));
+			this.ivf_offspring.add(sons.get(0));
+			this.ivf_offspring.add(sons.get(1));
 
 		}
 
-		for (Solution solution : this.offspring) {
+		for (Solution solution : this.ivf_offspring) {
 			if (solution.fitness > father.fitness) {
 				father.chromosome = solution.chromosome.clone();
 				father.evaluate();
 			}
 		}
 
-		this.offspring.clear();
+		this.ivf_offspring.clear();
 		return father;
 	}
 
 	private Solution EAR_N(ArrayList<Solution> solutions) {
 
+		Solution best = solutions.get(0);
 		Solution father = solutions.get(0);
 		solutions.remove(0);
+		int count = 0;
+		do {
 
-		int n_new_mothers = solutions.size() / 2;
+			int n_new_mothers = solutions.size() / 2;
 
-		for (int i = solutions.size() - 1; i >= n_new_mothers; i--) {
-			solutions.remove(i);
-		}
-
-		for (int i = 0; i < n_new_mothers; i++) {
-			solutions.add(randomMother());
-		}
-
-		for (Solution solution : solutions) {
-			ArrayList<Solution> sons = this.onePoint(solution, father);
-			this.offspring.add(sons.get(0));
-			this.offspring.add(sons.get(1));
-		}
-
-		for (Solution solution : this.offspring) {
-			if (solution.fitness > father.fitness) {
-				father.chromosome = solution.chromosome.clone();
-				father.evaluate();
+			for (int i = solutions.size() - 1; i >= n_new_mothers; i--) {
+				solutions.remove(i);
 			}
-		}
 
-		this.offspring.clear();
+			for (int i = 0; i < n_new_mothers; i++) {
+				solutions.add(randomMother());
+			}
+
+			for (Solution solution : solutions) {
+				ArrayList<Solution> sons = this.onePoint(solution, father);
+				this.ivf_offspring.add(sons.get(0));
+				this.ivf_offspring.add(sons.get(1));
+			}
+
+			for (Solution solution : this.ivf_offspring) {
+				if (solution.fitness > father.fitness) {
+					best = new Solution(solution.chromosome);
+				}
+			}
+
+			this.ivf_offspring.clear();
+
+			if (best.fitness > father.fitness) {
+				father = best;
+			} else {
+				break;
+			}
+			System.out.println(count++);
+		} while (true);
 
 		return father;
 	}
 
 	private Solution EAR_T(ArrayList<Solution> solutions) {
 
+		Solution best = solutions.get(0);
 		Solution father = solutions.get(0);
 		solutions.remove(0);
 
-		int n_new_mothers = solutions.size() / 2;
+		do {
 
-		for (int i = n_new_mothers; i < solutions.size(); i++) {
-			this.mutateFull(solutions.get(i));
-		}
+			int n_new_mothers = solutions.size() / 2;
 
-		for (int i = 0; i < n_new_mothers; i++) {
-			solutions.add(randomMother());
-		}
-
-		for (Solution solution : solutions) {
-			ArrayList<Solution> sons = this.onePoint(solution, father);
-			this.offspring.add(sons.get(0));
-			this.offspring.add(sons.get(1));
-		}
-
-		for (Solution solution : this.offspring) {
-			if (solution.fitness > father.fitness) {
-				father.chromosome = solution.chromosome.clone();
-				father.evaluate();
+			for (int i = n_new_mothers; i < solutions.size(); i++) {
+				this.mutateFull(solutions.get(i));
 			}
-		}
 
-		this.offspring.clear();
+			for (Solution solution : solutions) {
+				ArrayList<Solution> sons = this.onePoint(solution, father);
+				this.ivf_offspring.add(sons.get(0));
+				this.ivf_offspring.add(sons.get(1));
+			}
+
+			for (Solution solution : this.ivf_offspring) {
+				if (solution.fitness > father.fitness) {
+					best = new Solution(solution.chromosome);
+				}
+			}
+
+			this.ivf_offspring.clear();
+
+			if (best.fitness > father.fitness) {
+				father = best;
+			} else {
+				break;
+			}
+
+		} while (true);
 
 		return father;
+
 	}
-	
+
 	private Solution EAR_P(ArrayList<Solution> solutions) {
 
+		Solution best = solutions.get(0);
 		Solution father = solutions.get(0);
 		solutions.remove(0);
 
-		int n_new_mothers = solutions.size() / 2;
-		int part = r.nextInt(2);
-		
-		for (int i = n_new_mothers; i < solutions.size(); i++) {
-			this.mutatePart(solutions.get(i),part);
-		}
+		do {
+			int n_new_mothers = solutions.size() / 2;
+			int part = r.nextInt(2);
 
-		for (int i = 0; i < n_new_mothers; i++) {
-			solutions.add(randomMother());
-		}
-
-		for (Solution solution : solutions) {
-			ArrayList<Solution> sons = this.onePoint(solution, father);
-			this.offspring.add(sons.get(0));
-			this.offspring.add(sons.get(1));
-		}
-
-		for (Solution solution : this.offspring) {
-			if (solution.fitness > father.fitness) {
-				father.chromosome = solution.chromosome.clone();
-				father.evaluate();
+			for (int i = n_new_mothers; i < solutions.size(); i++) {
+				this.mutatePart(solutions.get(i), part);
 			}
-		}
 
-		this.offspring.clear();
+			for (Solution solution : solutions) {
+				ArrayList<Solution> sons = this.onePoint(solution, father);
+				this.ivf_offspring.add(sons.get(0));
+				this.ivf_offspring.add(sons.get(1));
+			}
+
+			for (Solution solution : this.ivf_offspring) {
+				if (solution.fitness > father.fitness) {
+					best = new Solution(solution.chromosome);
+				}
+			}
+
+			this.ivf_offspring.clear();
+
+			if (best.fitness > father.fitness) {
+				father = best;
+			} else {
+				break;
+			}
+
+		} while (true);
 
 		return father;
 	}
@@ -174,7 +199,7 @@ public class Invitro {
 			for (int i = 0; i < solution.chromosome_size / 2; i++)
 				solution.chromosome[i] = (solution.chromosome[i] == 0) ? 1 : 0;
 
-		}else {
+		} else {
 			for (int i = solution.chromosome_size / 2; i < solution.chromosome_size; i++)
 				solution.chromosome[i] = (solution.chromosome[i] == 0) ? 1 : 0;
 		}
@@ -186,8 +211,8 @@ public class Invitro {
 	public ArrayList<Solution> collect(ArrayList<Solution> host_population, int amount) {
 		ArrayList<Solution> partial_population = new ArrayList<>();
 
-		for (Solution solution : host_population) {
-			partial_population.add(new Solution(solution.chromosome));
+		for (int i = 0; i < amount; i++) {
+			partial_population.add(new Solution(host_population.get(i).chromosome));
 		}
 
 		return partial_population;
