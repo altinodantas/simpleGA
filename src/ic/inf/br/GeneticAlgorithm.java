@@ -4,23 +4,29 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
+import com.sun.javafx.css.Rule;
+
 public class GeneticAlgorithm {
 
 	public Random r = new Random();
 
-	public int CHROMOSOME_SIZE = 44;
-	public int MAX_GENERATIONS = 100;
-	public int POPULATION_SIZE = 100;
-	public float CROSSOVER_RATE = 0.80f;
-	public float MUTATION_RATE = 0.05f;
+	public int CHROMOSOME_SIZE 	= 44;
+	public int MAX_GENERATIONS 	= 200;
+	public int POPULATION_SIZE 	= 100;
+	public float CROSSOVER_RATE = 0.90f;
+	public float MUTATION_RATE 	= 0.05f;
+	private int ELITISM_NUMBER 	= 0;
+	
+	private Selection selection_op = new Roulette();
 
 	public ArrayList<Solution> population = new ArrayList<>();
 	public ArrayList<Solution> offspring = new ArrayList<>();
-	public Invitro IVF = new Invitro(CHROMOSOME_SIZE);
+	
+	public Invitro IVF = new Invitro(CHROMOSOME_SIZE); // for In Vitro Implementation
 
-	public static void main(String[] args) {
+	public Solution solve() {
 
-		GeneticAlgorithm ag = new GeneticAlgorithm();	
+		GeneticAlgorithm ag = new GeneticAlgorithm();
 
 		ag.initializePop();
 
@@ -28,37 +34,61 @@ public class GeneticAlgorithm {
 
 		int generation = 0;
 		while (generation < ag.MAX_GENERATIONS) {
-			
+
 			ag.performeCrossover();
 			ag.mutation();
-			ag.copyOffspring();
+			ag.mergePopulations();
 
 			Collections.sort(ag.population);
 
-//			System.out.println(ag.avgGenerationFitness() + "\t" + ag.population.get(0).fitness);
+			System.out.println(ag.avgGenerationFitness() + "\t" + ag.population.get(0).fitness);
 
 			generation++;
 
 		}
-
-		ag.printSolution(ag.population.get(0));
+		return ag.population.get(0);
 	}
 
-	private void copyOffspring() {
+	private void margePopulationWithInvitro(int N) {
 
 		for (Solution solution : offspring)
 			this.population.add(new Solution(solution.chromosome));
-		
+
 		/* Execution of In Vitro Fertilization Module */
-		
-		Solution inv_solution = IVF.performInVitro(IVF.collect(this.population, 11),IVF.EAR_P);
-		
-		if(inv_solution.fitness > this.population.get(0).fitness) {
+		Solution inv_solution = IVF.performInVitro(IVF.collect(this.population, N), IVF.EAR_P);
+
+		if (inv_solution.fitness > this.population.get(0).fitness) {
 			this.population.add(inv_solution);
-			System.out.println(this.population.get(0).fitness + "\t|" + inv_solution.fitness);
 		}
-		
 		/* Execution of In Vitro Fertilization Module */
+
+		Collections.sort(this.population);
+
+		for (int i = this.population.size() - 1; i >= this.POPULATION_SIZE; i--)
+			this.population.remove(i);
+
+		this.offspring.clear();
+
+	}
+	
+	private void mergePopulations() {
+
+		for (int i = POPULATION_SIZE-1; i >= ELITISM_NUMBER; i--) 
+			this.population.remove(i);
+		
+		Collections.sort(this.offspring);
+		
+		for (int i = ELITISM_NUMBER, j = 0; i < POPULATION_SIZE; i++, j++)
+			this.population.add(new Solution(offspring.get(j).chromosome));
+		
+		this.offspring.clear();
+		
+	}
+
+	private void mergePopulationsByRank() {
+
+		for (Solution solution : offspring)
+			this.population.add(new Solution(solution.chromosome));
 
 		Collections.sort(this.population);
 
@@ -73,7 +103,6 @@ public class GeneticAlgorithm {
 	public void initializePop() {
 
 		for (int i = 0; i < POPULATION_SIZE; i++) {
-
 			int[] individual = new int[CHROMOSOME_SIZE];
 			for (int j = 0; j < individual.length; j++)
 				individual[j] = r.nextInt(2);
@@ -81,55 +110,22 @@ public class GeneticAlgorithm {
 		}
 
 	}
-	
-	public int randSelection() {
-		return r.nextInt(POPULATION_SIZE);
-	}
-
-	public int binaryTournament() {
-
-		// Attention: this works just whether population is already sorted by fitness
-		// values
-
-		int x1 = r.nextInt(POPULATION_SIZE);
-		int x2 = r.nextInt(POPULATION_SIZE);
-
-		return (x1 < x2) ? x1 : x2;
-	}
-
-	public int roulette() {
-		int index = 0;
-		
-		//sum of all fitness
-		float sum = 0;
-		for (Solution solution : population)
-			sum += solution.fitness;
-
-		float threshold = (float) (Math.random() * sum);
-		
-		float a_sum = 0;
-		for (int i = 0; i < population.size(); i++) {
-			a_sum += population.get(i).fitness;
-			if (a_sum >= threshold) {
-				index = i;
-				break;
-			}
-		}
-		return index;
-	}
 
 	public void performeCrossover() {
 
-		// Adjusting for even number of parents
-		int size = (int) (POPULATION_SIZE / 2 * CROSSOVER_RATE) * 2;
+		while (this.offspring.size() < POPULATION_SIZE) {
 
-		for (int i = 0; i < size; i += 2) {
-			ArrayList<Solution> sons = this.onePoint(population.get(this.roulette()),
-					population.get(this.roulette()));
-//			ArrayList<Solution> sons = this.onePoint(population.get(this.binaryTournament()),
-//					population.get(this.binaryTournament()));
-			this.offspring.add(sons.get(0));
-			this.offspring.add(sons.get(1));
+			int father_a = this.selection_op.getIndividualIndex(population);
+			int father_b = this.selection_op.getIndividualIndex(population);
+
+			if (r.nextDouble() < CROSSOVER_RATE) {
+				ArrayList<Solution> sons = this.onePoint(population.get(father_a), population.get(father_b));
+				this.offspring.add(sons.get(0));
+				this.offspring.add(sons.get(1));
+			} else {
+				this.offspring.add(new Solution(population.get(father_a).chromosome));
+				this.offspring.add(new Solution(population.get(father_b).chromosome));
+			}
 		}
 
 	}
