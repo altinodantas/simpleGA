@@ -6,18 +6,108 @@ import java.util.Random;
 
 import com.sun.javafx.css.Rule;
 
+/** Simple GA class
+ * @author Altino Dantas
+ * @version 0.0.1
+ * 
+ */
 public class GeneticAlgorithm {
+
+	static final int NEXT_GEN_RANK = 0;
+	static final int NEXT_GEN_DESC = 1;
 
 	public Random r = new Random();
 
-	public int CHROMOSOME_SIZE 	= 44;
-	public int MAX_GENERATIONS 	= 200;
-	public int POPULATION_SIZE 	= 100;
-	public float CROSSOVER_RATE = 0.90f;
-	public float MUTATION_RATE 	= 0.05f;
-	private int ELITISM_NUMBER 	= 0;
+	private int TYPE_OF_GEN_MERGE;
+	private boolean PRINT_FINAL;
+	private int CHROMOSOME_SIZE;
+	private int MAX_GENERATIONS;
+	private int POPULATION_SIZE;
+	private float CROSSOVER_RATE;
 	
-	private Selection selection_op = new Roulette();
+	public int getCHROMOSOME_SIZE() {
+		return CHROMOSOME_SIZE;
+	}
+
+	public void setCHROMOSOME_SIZE(int cHROMOSOME_SIZE) {
+		CHROMOSOME_SIZE = cHROMOSOME_SIZE;
+	}
+
+	public int getMAX_GENERATIONS() {
+		return MAX_GENERATIONS;
+	}
+
+	public void setMAX_GENERATIONS(int mAX_GENERATIONS) {
+		MAX_GENERATIONS = mAX_GENERATIONS;
+	}
+
+	public int getPOPULATION_SIZE() {
+		return POPULATION_SIZE;
+	}
+
+	public void setPOPULATION_SIZE(int pOPULATION_SIZE) {
+		POPULATION_SIZE = pOPULATION_SIZE;
+	}
+
+	public float getCROSSOVER_RATE() {
+		return CROSSOVER_RATE;
+	}
+
+	public void setCROSSOVER_RATE(float cROSSOVER_RATE) {
+		CROSSOVER_RATE = cROSSOVER_RATE;
+	}
+
+	public float getMUTATION_RATE() {
+		return MUTATION_RATE;
+	}
+
+	public void setMUTATION_RATE(float mUTATION_RATE) {
+		MUTATION_RATE = mUTATION_RATE;
+	}
+
+	public int getELITISM_NUMBER() {
+		return ELITISM_NUMBER;
+	}
+
+	public void setELITISM_NUMBER(int eLITISM_NUMBER) {
+		ELITISM_NUMBER = eLITISM_NUMBER;
+	}
+
+	public Selection getSelection_op() {
+		return selection_op;
+	}
+
+	public void setSelection_op(Selection selection_op) {
+		this.selection_op = selection_op;
+	}
+
+	private float MUTATION_RATE;
+	private int ELITISM_NUMBER;
+	
+	private Selection selection_op = null;
+	
+	/** GA constructor. Please, before calling solver method, use setters to define the parameters. Otherwise, follow values will be applied.
+	 * CHROMOSOME_SIZE 	= 44;
+	 * MAX_GENERATIONS 	= 200;
+	 * POPULATION_SIZE 	= 100;
+	 * CROSSOVER_RATE 	= 0.90f;
+	 * MUTATION_RATE 	= 0.05f;
+	 * ELITISM_NUMBER 	= 0;
+	 * selection_op = new Roulette();
+	 */
+	public GeneticAlgorithm() {
+	
+		// GA is initialized whit these parameters by default 
+		setTYPE_OF_GEN_MERGE(this.NEXT_GEN_DESC);
+		CHROMOSOME_SIZE 	= 44;
+		MAX_GENERATIONS 	= 200;
+		POPULATION_SIZE 	= 100;
+		CROSSOVER_RATE 		= 0.90f;
+		MUTATION_RATE 		= 0.05f;
+		ELITISM_NUMBER 		= 0;
+		selection_op = new Roulette();
+		this.setPRINT_FINAL(false);
+	}
 
 	public ArrayList<Solution> population = new ArrayList<>();
 	public ArrayList<Solution> offspring = new ArrayList<>();
@@ -26,27 +116,42 @@ public class GeneticAlgorithm {
 
 	public Solution solve() {
 
-		GeneticAlgorithm ag = new GeneticAlgorithm();
+		this.initializePop();
 
-		ag.initializePop();
-
-		Collections.sort(ag.population);
+		Collections.sort(this.population);
 
 		int generation = 0;
-		while (generation < ag.MAX_GENERATIONS) {
+		while (generation < this.MAX_GENERATIONS) {
 
-			ag.performeCrossover();
-			ag.mutation();
-			ag.mergePopulations();
+			this.performeCrossover();
+			this.mutation();
+			
+			switch (this.getTYPE_OF_GEN_MERGE()) {
+			case 0:
+				this.mergePopulationsByRank();
+				break;
+			case 1: 
+				this.mergePopulations();
+				break;
+			case 2:
+				this.mergePopulationsByRank();
+				break;
+			default:
+				break;
+			}
+			
+			Collections.sort(this.population);
 
-			Collections.sort(ag.population);
-
-			System.out.println(ag.avgGenerationFitness() + "\t" + ag.population.get(0).fitness);
+			System.out.println(this.avgGenerationFitness() + "\t" + this.population.get(0).fitness);
 
 			generation++;
 
 		}
-		return ag.population.get(0);
+		
+		if(this.isPRINT_FINAL())
+			this.printSolution(this.population.get(0));
+		
+		return this.population.get(0);
 	}
 
 	private void margePopulationWithInvitro(int N) {
@@ -80,6 +185,7 @@ public class GeneticAlgorithm {
 		
 		for (int i = ELITISM_NUMBER, j = 0; i < POPULATION_SIZE; i++, j++)
 			this.population.add(new Solution(offspring.get(j).chromosome));
+		
 		
 		this.offspring.clear();
 		
@@ -177,7 +283,7 @@ public class GeneticAlgorithm {
 			System.out.print("|" + gene);
 
 		System.out.println("\n--------------------");
-		System.out.println(s.fitness);
+		System.out.println("F(x,y) = " + s.fitness);
 
 		double x = 0, y = 0;
 
@@ -188,15 +294,13 @@ public class GeneticAlgorithm {
 			bin_x[i] = s.chromosome[i];
 			bin_y[i] = s.chromosome[i + bin_y.length];
 		}
-
-		for (int i = 0; i < bin_x.length; i++)
+		
+		for (int i = 0; i < bin_x.length; i++) {
 			x += bin_x[i] * Math.pow(2, bin_x.length - i - 1);
-
-		x = -100 + x * (200) / (Math.pow(2, bin_x.length) - 1);
-
-		for (int i = 0; i < bin_y.length; i++)
 			y += bin_y[i] * Math.pow(2, bin_y.length - i - 1);
-
+		}
+		
+		x = -100 + x * (200) / (Math.pow(2, bin_x.length) - 1);
 		y = -100 + y * (200) / (Math.pow(2, bin_y.length) - 1);
 
 		System.out.println("x: " + x + ", y: " + x);
@@ -207,5 +311,21 @@ public class GeneticAlgorithm {
 		for (Solution solution : population)
 			avg += solution.fitness;
 		return avg / population.size();
+	}
+
+	public boolean isPRINT_FINAL() {
+		return PRINT_FINAL;
+	}
+
+	public void setPRINT_FINAL(boolean pRINT_FINAL) {
+		PRINT_FINAL = pRINT_FINAL;
+	}
+
+	public int getTYPE_OF_GEN_MERGE() {
+		return TYPE_OF_GEN_MERGE;
+	}
+
+	public void setTYPE_OF_GEN_MERGE(int tYPE_OF_GEN_MERGE) {
+		TYPE_OF_GEN_MERGE = tYPE_OF_GEN_MERGE;
 	}
 }
