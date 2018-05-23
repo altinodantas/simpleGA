@@ -11,7 +11,7 @@ public class Solution implements Comparable<Solution>{
 
 	public Solution(int[] bits) {
 		this.chromosome_size = bits.length;
-		this.chromosome = bits;
+		this.chromosome = bits.clone();
 		this.fitness = (float) evaluate(chromosome);
 	}
 
